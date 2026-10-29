@@ -1,22 +1,47 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { X, Play, ShieldCheck, Cpu } from "lucide-react";
+import React, { useEffect, useRef } from "react";
+import { X, ShieldCheck, Cpu } from "lucide-react";
 
 interface VideoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  videoSrc?: string;
+  title?: string;
 }
 
-export function VideoModal({ isOpen, onClose }: VideoModalProps) {
+export function VideoModal({
+  isOpen,
+  onClose,
+  videoSrc = "/videos/demo.mp4",
+  title = "CortexNovation Ai — Architectural Walkthrough",
+}: VideoModalProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
+
     if (isOpen) {
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleKeyDown);
+      // Auto-play when opened
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {
+          // Browser may block unmuted autoplay; user can click play
+        });
+      }
+    } else {
+      // Pause video when modal is closed
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
     }
+
     return () => {
       document.body.style.overflow = "auto";
       window.removeEventListener("keydown", handleKeyDown);
@@ -26,21 +51,21 @@ export function VideoModal({ isOpen, onClose }: VideoModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 sm:p-6 md:p-10">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-3 sm:p-6 md:p-10">
       {/* Dark backdrop blur */}
       <div
-        className="fixed inset-0 bg-[#050B1F]/85 backdrop-blur-xl transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-[#050B1F]/90 backdrop-blur-xl transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-4xl bg-[#0A1330] border border-blue-500/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(45,140,255,0.3)] z-10">
+      <div className="relative w-full max-w-5xl bg-[#0A1330] border border-cyan-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(34,211,238,0.25)] z-10 flex flex-col">
         {/* Header bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-blue-900/40 bg-[#050B1F]/60">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-blue-900/50 bg-[#050B1F]/80 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-sm font-semibold tracking-wide text-white">
-              CortexNovation Ai — Architectural Walkthrough
+            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+            <span className="text-xs sm:text-sm font-semibold tracking-wide text-white truncate max-w-[280px] sm:max-w-none">
+              {title}
             </span>
           </div>
           <button
@@ -52,44 +77,37 @@ export function VideoModal({ isOpen, onClose }: VideoModalProps) {
           </button>
         </div>
 
-        {/* Video Canvas / Showcase area */}
-        <div className="relative aspect-video bg-gradient-to-br from-[#050B1F] via-[#091438] to-[#0D1C4D] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-          {/* Animated decorative grid lines */}
-          <div className="absolute inset-0 bg-cyber-grid opacity-30" />
-          <div className="absolute w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Interactive Player Simulation */}
-          <div className="relative z-10 flex flex-col items-center max-w-lg">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-[0_0_35px_rgba(45,140,255,0.7)] mb-6 cursor-pointer hover:scale-110 transition-transform">
-              <Play className="w-8 h-8 text-white fill-white ml-1" />
-            </div>
-
-            <h3 className="text-2xl font-bold text-white mb-2">
-              Next-Gen Neural Architecture in Action
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed mb-6">
-              Watch how our multi-agent orchestration, high-throughput Spring Boot 3 microservices, and reactive data meshes power modern enterprise software.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 w-full text-xs text-left">
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-950/50 border border-blue-500/20 text-slate-200">
-                <Cpu className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>Zero-Latency Event Streaming</span>
-              </div>
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-950/50 border border-blue-500/20 text-slate-200">
-                <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0" />
-                <span>Deterministic Guardrail Security</span>
-              </div>
-            </div>
-          </div>
+        {/* Video Canvas / Player */}
+        <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            controls
+            playsInline
+            className="w-full h-full object-contain"
+          >
+            Your browser does not support the video tag.
+          </video>
         </div>
 
-        {/* Footer info */}
-        <div className="px-6 py-3.5 bg-[#070E28] border-t border-blue-900/40 flex items-center justify-between text-xs text-slate-400">
-          <span>Enterprise Technical Overview • Duration: 3 min 45 sec</span>
-          <span className="text-[#2D8CFF] font-medium">Confidential & Proprietary</span>
+        {/* Footer info strip */}
+        <div className="px-5 sm:px-6 py-3 bg-[#070E28] border-t border-blue-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-cyan-300">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Multi-Agent Orchestration Demo</span>
+            </span>
+            <span className="hidden md:inline-flex items-center gap-1.5 text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Enterprise Ready</span>
+            </span>
+          </div>
+          <span className="text-[#2D8CFF] font-medium text-[11px] sm:text-xs">
+            CortexNovation AI • Technical Walkthrough
+          </span>
         </div>
       </div>
     </div>
   );
 }
+
